@@ -4,7 +4,12 @@ import { z } from "zod";
 import { config } from "../config";
 import { requireAuth, setSession, clearSession } from "../middleware/auth";
 import { requestMagicLink, consumeMagicLink } from "../services/authService";
-import { getUserById, getUserByAddonToken, regenerateAddonToken } from "../services/userService";
+import {
+  getUserById,
+  getUserByAddonToken,
+  regenerateAddonToken,
+  updateDisplayName,
+} from "../services/userService";
 import { prisma } from "../db";
 
 export const authRouter = Router();
@@ -138,6 +143,27 @@ authRouter.get("/me", requireAuth, async (req: Request, res: Response) => {
     });
   } catch (err) {
     console.error("GET /me failed:", err);
+    res.status(500).json({ error: "internal error" });
+  }
+});
+
+const updateMeSchema = z.object({
+  displayName: z.string().max(60).nullable().optional(),
+});
+
+/** PATCH /me — updates the authenticated user's profile (display name). */
+authRouter.patch("/me", requireAuth, async (req: Request, res: Response) => {
+  const parsed = updateMeSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "invalid input" });
+    return;
+  }
+
+  try {
+    const user = await updateDisplayName(req.user!.id, parsed.data.displayName ?? null);
+    res.json({ id: user.id, email: user.email, displayName: user.displayName });
+  } catch (err) {
+    console.error("PATCH /me failed:", err);
     res.status(500).json({ error: "internal error" });
   }
 });

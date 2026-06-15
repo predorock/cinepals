@@ -200,6 +200,24 @@
   // Header actions
   // ---------------------------------------------------------------------------
   function initHeader() {
+    $("#edit-name-btn").addEventListener("click", async () => {
+      const current = currentUser.displayName || "";
+      const name = prompt("Set your display name (this is what your friends see):", current);
+      if (name === null) return; // cancelled
+      try {
+        const data = await api("/api/auth/me", {
+          method: "PATCH",
+          body: { displayName: name.trim() },
+        });
+        currentUser.displayName = data.displayName;
+        $("#user-name").textContent = currentUser.displayName || currentUser.email;
+        $("#user-email").textContent = currentUser.displayName ? currentUser.email : "";
+        toast(currentUser.displayName ? "Display name updated." : "Display name cleared.", "success");
+      } catch (err) {
+        toast(err.message, "error");
+      }
+    });
+
     $("#logout-btn").addEventListener("click", async () => {
       try {
         await api("/api/auth/logout", { method: "POST" });
@@ -349,7 +367,7 @@
       return;
     }
     for (const r of incoming) {
-      const u = r.requester || {};
+      const u = r.user || {};
       const item = el("li", { class: "list-item" }, [
         el("div", { class: "li-main" }, [
           el("div", { class: "li-name", text: labelFor(u) }),
@@ -358,11 +376,11 @@
         el("div", { class: "li-actions" }, [
           el("button", {
             class: "btn-icon ok", attrs: { title: "Accept" }, text: "✓ Accept",
-            on: { click: () => respondRequest(r.id, "accept") },
+            on: { click: () => respondRequest(r.friendshipId, "accept") },
           }),
           el("button", {
             class: "btn-icon no", attrs: { title: "Decline" }, text: "✕",
-            on: { click: () => respondRequest(r.id, "decline") },
+            on: { click: () => respondRequest(r.friendshipId, "decline") },
           }),
         ]),
       ]);
@@ -389,7 +407,7 @@
       return;
     }
     for (const r of outgoing) {
-      const u = r.addressee || {};
+      const u = r.user || {};
       const item = el("li", { class: "list-item" }, [
         el("div", { class: "li-main" }, [
           el("div", { class: "li-name", text: labelFor(u) }),

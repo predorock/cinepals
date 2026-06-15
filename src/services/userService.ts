@@ -28,6 +28,15 @@ export function getUserByAddonToken(addonToken: string) {
   return prisma.user.findUnique({ where: { addonToken } });
 }
 
+/** Updates the user's display name (shown to friends). Empty/blank clears it. */
+export async function updateDisplayName(
+  userId: string,
+  displayName: string | null,
+): Promise<User> {
+  const trimmed = displayName?.trim() || null;
+  return prisma.user.update({ where: { id: userId }, data: { displayName: trimmed } });
+}
+
 /** Regenerates the addon token (revokes the old custom URL). */
 export async function regenerateAddonToken(userId: string): Promise<string> {
   const token = generateToken();

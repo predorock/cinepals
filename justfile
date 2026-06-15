@@ -54,6 +54,11 @@ db-reset:
 studio:
     pnpm exec prisma studio
 
+# Seed fake friends + recommendations for a user (default: demo@example.com)
+#   just seed                 |  just seed someone@example.com
+seed email="":
+    pnpm exec tsx scripts/seed-fake.ts {{email}}
+
 # ---------------------------------------------------------------------------
 # Mail trap (Mailpit — catches dev emails, inbox at http://127.0.0.1:8025)
 # ---------------------------------------------------------------------------

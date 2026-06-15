@@ -1,0 +1,101 @@
+// Prisma schema per Stremio Friends
+// Email normalizzate in lowercase a livello applicativo (portabilità multi-DB).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(uuid())
+  email       String   @unique
+  displayName String?
+  addonToken  String   @unique
+  createdAt   DateTime @default(now())
+
+  loginTokens         LoginToken[]
+  sentFriendships     Friendship[] @relation("Requester")
+  receivedFriendships Friendship[] @relation("Addressee")
+  sentSuggestions     Suggestion[] @relation("FromUser")
+  receivedSuggestions Suggestion[] @relation("ToUser")
+
+  @@map("users")
+}
+
+model LoginToken {
+  token     String    @id
+  userId    String
+  expiresAt DateTime
+  usedAt    DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("login_tokens")
+}
+
+model Friendship {
+  id          String           @id @default(uuid())
+  requesterId String
+  addresseeId String
+  status      FriendshipStatus @default(pending)
+  createdAt   DateTime         @default(now())
+  respondedAt DateTime?
+
+  requester User @relation("Requester", fields: [requesterId], references: [id], onDelete: Cascade)
+  addressee User @relation("Addressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+
+  @@unique([requesterId, addresseeId])
+  @@index([addresseeId, status])
+  @@map("friendships")
+}
+
+enum FriendshipStatus {
+  pending
+  accepted
+  declined
+  blocked
+}
+
+model Suggestion {
+  id          String           @id @default(uuid())
+  fromUserId  String
+  toUserId    String
+  imdbId      String
+  contentType String           @default("movie") // movie | series
+  note        String?
+  status      SuggestionStatus @default(new)
+  createdAt   DateTime         @default(now())
+
+  fromUser User @relation("FromUser", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUser   User @relation("ToUser", fields: [toUserId], references: [id], onDelete: Cascade)
+
+  @@unique([fromUserId, toUserId, imdbId])
+  @@index([toUserId, status])
+  @@index([fromUserId])
+  @@map("suggestions")
+}
+
+enum SuggestionStatus {
+  new
+  seen
+  watched
+  dismissed
+}
+
+model TitleCache {
+  imdbId      String   @id
+  type        String
+  name        String
+  poster      String?
+  background  String?
+  description String?
+  releaseInfo String?
+  cachedAt    DateTime @default(now())
+
+  @@map("title_cache")
+}

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stremio Friends 🎬 — Recommend movies and series to your friends</title>
+  <meta name="description" content="A Stremio addon to recommend movies and series to your friends and receive their suggestions, right inside Stremio." />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <!-- Decorative background -->
+  <div class="bg-glow" aria-hidden="true"></div>
+
+  <!-- Toast / messages area -->
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+
+  <!-- Initial loading screen -->
+  <div id="loading" class="loading-screen">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- ===================== LOGGED-OUT STATE ===================== -->
+  <main id="view-guest" class="view hidden">
+    <header class="landing-header">
+      <div class="brand">
+        <span class="brand-logo">🎬</span>
+        <span class="brand-name">Stremio <span class="accent">Friends</span></span>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="hero-content">
+        <h1>Watch what <span class="accent">your friends</span> love.</h1>
+        <p class="hero-sub">
+          Stremio Friends is an addon that turns your friends' recommendations into a catalog
+          inside Stremio. Suggest movies and series, receive their suggestions, and never miss
+          a title worth watching again.
+        </p>
+
+        <ul class="hero-features">
+          <li><span class="ico">👥</span> Connect with your friends by email</li>
+          <li><span class="ico">📺</span> A dedicated catalog inside Stremio</li>
+          <li><span class="ico">💌</span> Suggestions with a personal note</li>
+          <li><span class="ico">🔒</span> No passwords, just magic links</li>
+        </ul>
+      </div>
+
+      <div class="auth-card card">
+        <h2>Sign in</h2>
+        <p class="muted">
+          Enter your email: we'll send you a <strong>sign-in link</strong>.
+          No password to remember.
+        </p>
+        <form id="login-form" class="stack" autocomplete="on">
+          <label class="field">
+            <span>Email</span>
+            <input type="email" id="login-email" name="email" placeholder="you@example.com" required />
+          </label>
+          <button type="submit" class="btn btn-primary btn-block" id="login-submit">
+            Send me the sign-in link
+          </button>
+        </form>
+        <div id="login-sent" class="notice notice-success hidden">
+          <span class="ico">📬</span>
+          <div>
+            <strong>Check your inbox!</strong><br />
+            We've sent you a sign-in link by email. Open the link to get in.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="landing-footer">
+      <span>Stremio Friends · an unofficial addon for Stremio</span>
+    </footer>
+  </main>
+
+  <!-- ===================== LOGGED-IN STATE (DASHBOARD) ===================== -->
+  <div id="view-app" class="view hidden">
+    <header class="app-header">
+      <div class="brand">
+        <span class="brand-logo">🎬</span>
+        <span class="brand-name">Stremio <span class="accent">Friends</span></span>
+      </div>
+      <div class="user-box">
+        <div class="user-meta">
+          <span class="user-name" id="user-name"></span>
+          <span class="user-email muted" id="user-email"></span>
+        </div>
+        <button class="btn btn-ghost" id="logout-btn">Sign out</button>
+      </div>
+    </header>
+
+    <main class="dashboard">
+
+      <!-- YOUR ADDON -->
+      <section class="card section">
+        <div class="section-head">
+          <h2>📡 Your addon</h2>
+        </div>
+        <p class="muted">
+          Install your personal addon in Stremio. Paste this URL into
+          <strong>Stremio → Addons → Install from URL</strong>, or use the quick-install button.
+        </p>
+        <div class="manifest-row">
+          <input type="text" id="manifest-url" class="manifest-input" readonly />
+          <button class="btn btn-soft" id="copy-manifest-btn">📋 Copy URL</button>
+        </div>
+        <div class="btn-row">
+          <a class="btn btn-primary" id="install-btn" href="#">➕ Install in Stremio</a>
+          <a class="btn btn-soft" id="update-btn" href="#">🔄 Update in Stremio</a>
+          <button class="btn btn-ghost" id="regen-token-btn">♻️ Regenerate token</button>
+        </div>
+        <p class="muted" style="margin-top:8px">
+          Added or removed a friend? Click <strong>Update in Stremio</strong> to refresh your per-friend lists.
+        </p>
+      </section>
+
+      <!-- FRIENDS -->
+      <section class="card section">
+        <div class="section-head">
+          <h2>👥 Friends</h2>
+        </div>
+
+        <form id="add-friend-form" class="inline-form">
+          <input type="email" id="add-friend-email" placeholder="friend's email" required />
+          <button type="submit" class="btn btn-primary">Add</button>
+        </form>
+
+        <div class="subsection">
+          <h3 class="sub-title">Your friends</h3>
+          <ul id="friends-list" class="list"></ul>
+        </div>
+
+        <div class="subsection">
+          <h3 class="sub-title">Incoming requests</h3>
+          <ul id="incoming-list" class="list"></ul>
+        </div>
+
+        <div class="subsection">
+          <h3 class="sub-title">Sent requests</h3>
+          <ul id="outgoing-list" class="list"></ul>
+        </div>
+      </section>
+
+      <!-- SUGGEST A MOVIE -->
+      <section class="card section">
+        <div class="section-head">
+          <h2>🔍 Suggest a movie or series</h2>
+        </div>
+
+        <form id="search-form" class="search-bar">
+          <input type="text" id="search-query" placeholder="Search for a title…" />
+          <select id="search-type" class="select">
+            <option value="movie">🎬 Movie</option>
+            <option value="series">📺 Series</option>
+          </select>
+          <button type="submit" class="btn btn-primary">Search</button>
+        </form>
+
+        <div id="search-results" class="results-grid"></div>
+      </section>
+
+      <!-- RECEIVED SUGGESTIONS -->
+      <section class="card section">
+        <div class="section-head">
+          <h2>📥 Received suggestions</h2>
+        </div>
+        <ul id="received-list" class="list suggestions"></ul>
+      </section>
+
+      <!-- SENT SUGGESTIONS -->
+      <section class="card section">
+        <div class="section-head">
+          <h2>📤 Sent suggestions</h2>
+        </div>
+        <ul id="sent-list" class="list suggestions"></ul>
+      </section>
+
+      <!-- DANGER ZONE -->
+      <section class="card section danger-section">
+        <div class="section-head">
+          <h2>⚠️ Danger zone</h2>
+        </div>
+        <p class="muted">Deleting your account is permanent and removes all of your data.</p>
+        <button class="btn btn-danger" id="delete-account-btn">Delete account</button>
+      </section>
+
+    </main>
+
+    <footer class="landing-footer">
+      <span>Stremio Friends · an unofficial addon for Stremio</span>
+    </footer>
+  </div>
+
+  <!-- ===================== MODAL: send suggestion ===================== -->
+  <div id="suggest-modal" class="modal-overlay hidden">
+    <div class="modal card" role="dialog" aria-modal="true">
+      <button class="modal-close" id="suggest-modal-close" aria-label="Close">✕</button>
+      <h3 id="suggest-modal-title">Suggest to a friend</h3>
+      <div class="modal-media">
+        <img id="suggest-modal-poster" alt="" />
+        <div>
+          <div class="modal-media-name" id="suggest-modal-name"></div>
+          <div class="muted" id="suggest-modal-year"></div>
+        </div>
+      </div>
+      <form id="suggest-form" class="stack">
+        <label class="field">
+          <span>Send to</span>
+          <select id="suggest-friend" class="select" required></select>
+        </label>
+        <label class="field">
+          <span>Note (optional)</span>
+          <textarea id="suggest-note" rows="3" placeholder="Why should they watch it?"></textarea>
+        </label>
+        <div class="btn-row">
+          <button type="submit" class="btn btn-primary btn-block">Send suggestion</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

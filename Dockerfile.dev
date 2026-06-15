@@ -1,0 +1,20 @@
+# Image for local development (hot-reload via tsx watch).
+FROM node:20-alpine
+
+# Prisma on Alpine requires openssl for the query engine.
+RUN apk add --no-cache openssl
+
+WORKDIR /app
+
+# Install dependencies in a cacheable layer.
+COPY package*.json ./
+RUN npm install
+
+# Generate the Prisma client at build time (the runtime schema comes from the mounted volume).
+COPY prisma ./prisma
+RUN npx prisma generate
+
+EXPOSE 8990
+
+# Overridden by the `command` in docker-compose (db push + dev).
+CMD ["npm", "run", "dev"]

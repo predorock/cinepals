@@ -23,9 +23,9 @@ setup: install env db-up
     @just push
     @echo "✅ All set. Start with:  just dev"
 
-# Install the npm dependencies
+# Install the dependencies
 install:
-    npm install
+    pnpm install
 
 # Create .env.local from .env.example if it does not exist
 env:
@@ -52,7 +52,7 @@ db-reset:
 
 # Open Prisma Studio (database UI)
 studio:
-    npx prisma studio
+    pnpm exec prisma studio
 
 # ---------------------------------------------------------------------------
 # Mail trap (Mailpit — catches dev emails, inbox at http://127.0.0.1:8025)
@@ -76,15 +76,15 @@ mail-open:
 
 # Generate the Prisma client
 generate:
-    npx prisma generate
+    pnpm exec prisma generate
 
 # Sync the schema to the DB without migration files (rapid development)
 push:
-    npx prisma db push
+    pnpm exec prisma db push
 
 # Create a new migration, e.g.:  just migrate init
 migrate name:
-    npx prisma migrate dev --name {{name}}
+    pnpm exec prisma migrate dev --name {{name}}
 
 # ---------------------------------------------------------------------------
 # Development and build
@@ -93,19 +93,19 @@ migrate name:
 # Start in development with hot-reload (also starts the database + mail trap)
 dev: db-up mail-up
     @sleep 2
-    npx tsx watch src/server.ts
+    pnpm exec tsx watch src/server.ts
 
 # Type-check without emitting files
 typecheck:
-    npx tsc -p tsconfig.json --noEmit
+    pnpm exec tsc -p tsconfig.json --noEmit
 
 # Production build (prisma generate + tsc)
 build:
-    npm run build
+    pnpm run build
 
 # Start the production build
 start:
-    npm run start
+    pnpm start
 
 # ---------------------------------------------------------------------------
 # Docker (stack completo: db + app + adminer)

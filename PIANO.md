@@ -275,7 +275,7 @@ When Stremio calls `/u/:token/catalog/movie/friends-suggestions-movie.json`:
 
 ## 9. Deploy on Render
 
-- **Web Service**: build `npm run build` (tsc), start `node dist/server.js`. Render provides automatic HTTPS → Stremio requirement satisfied.
+- **Web Service**: build `pnpm run build` (tsc), start `node dist/server.js`. Render provides automatic HTTPS → Stremio requirement satisfied.
 - **Render PostgreSQL**: managed instance; `DATABASE_URL` in the env vars.
 - **Environment variables**: `DATABASE_URL`, `TMDB_API_KEY`, `JWT_SECRET`, `SMTP_*` (or `RESEND_API_KEY`), `PUBLIC_URL` (to build the addon URLs and magic-links).
 - **Migrations**: `prisma migrate deploy` as the pre-deploy/release command.

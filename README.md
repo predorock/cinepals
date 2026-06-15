@@ -108,15 +108,15 @@ The fastest way: Postgres + app with hot-reload + Adminer, all with one command.
 3. **Install and prepare the database**:
 
    ```bash
-   npm install
-   npx prisma migrate dev --name init   # creates the tables + generates the client
+   pnpm install
+   pnpm exec prisma migrate dev --name init   # creates the tables + generates the client
    ```
 
 4. **Start in development** (loads .env, hot-reload):
 
    ```bash
    node --env-file=.env node_modules/.bin/tsx watch src/server.ts
-   # or, if you have dotenv-cli: npm run dev
+   # or, if you have dotenv-cli: pnpm run dev
    ```
 
 5. Open `http://127.0.0.1:8990/configure`, log in with your email, copy the login link from the console, and install the addon URL shown in Stremio.
@@ -124,8 +124,8 @@ The fastest way: Postgres + app with hot-reload + Adminer, all with one command.
 ## Production build
 
 ```bash
-npm run build   # prisma generate && tsc
-npm start       # node dist/server.js
+pnpm run build   # prisma generate && tsc
+pnpm start       # node dist/server.js
 ```
 
 ## Deploy on Render
@@ -133,7 +133,7 @@ npm start       # node dist/server.js
 1. Push the repo to GitHub.
 2. On Render: **New → Blueprint** and select the repo (uses [`render.yaml`](./render.yaml)). It creates the web service + the Postgres database.
 3. Set the `sync: false` env vars: `PUBLIC_URL` (= public URL of the service, e.g. `https://cinepals.onrender.com`), `TMDB_API_KEY`, `RESEND_API_KEY`, `EMAIL_FROM`.
-4. The `preDeployCommand` runs `prisma migrate deploy` (migration files are required: create the init locally with `npx prisma migrate dev --name init` and commit it).
+4. The `preDeployCommand` runs `prisma migrate deploy` (migration files are required: create the init locally with `pnpm exec prisma migrate dev --name init` and commit it).
 5. HTTPS is automatic → Stremio requirement satisfied.
 
 > Note: the addon should NOT be published on Addon Central, because the URL contains the personal token and the catalog is per-user. It is shared only via URL/configure.
@@ -160,4 +160,4 @@ npm start       # node dist/server.js
 
 ## Verification status
 
-`tsc` passes clean apart from errors that depend exclusively on the generated Prisma client (`prisma generate`, run automatically by `npm run build`). All application-level type bugs have been resolved.
+`tsc` passes clean apart from errors that depend exclusively on the generated Prisma client (`prisma generate`, run automatically by `pnpm run build`). All application-level type bugs have been resolved.

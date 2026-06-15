@@ -7,10 +7,12 @@ services:
     plan: free
     # Free tier doesn't support preDeployCommand, so we sync the schema during
     # build (DATABASE_URL is available at build time). db push is idempotent.
-    # NODE_ENV=production makes `npm install` skip devDependencies, but the build
-    # needs them (prisma, typescript). --include=dev forces them in for the build.
-    buildCommand: npm install --include=dev && npm run build && npx prisma db push --accept-data-loss
-    startCommand: npm run start
+    # corepack enable activates the pnpm version pinned in package.json.
+    # NODE_ENV=production makes pnpm skip devDependencies, but the build needs
+    # them (prisma, typescript). --prod=false forces them in for the build.
+    buildCommand: corepack enable && pnpm install --prod=false && pnpm run build && pnpm exec prisma db push --accept-data-loss
+    # Run the built server directly so runtime needs no package manager.
+    startCommand: node dist/server.js
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV

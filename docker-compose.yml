@@ -54,7 +54,7 @@ services:
       - ./:/app
       - /app/node_modules
     # db push: syncs the schema to the DB (without migration files) and generates the client.
-    command: sh -c "npx prisma db push && npm run dev"
+    command: sh -c "pnpm exec prisma db push && pnpm dev"
 
   # Local mail trap: catches all outgoing email (no real delivery).
   #   SMTP:    mailpit:1025 (inside Docker) / 127.0.0.1:1025 (from host)

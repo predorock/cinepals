@@ -55,7 +55,7 @@ studio:
     pnpm exec prisma studio
 
 # Seed fake friends + recommendations for a user (default: demo@example.com)
-#   just seed                 |  just seed someone@example.com
+#   just seed                 |  just seed your@email.com
 seed email="":
     pnpm exec tsx scripts/seed-fake.ts {{email}}
 

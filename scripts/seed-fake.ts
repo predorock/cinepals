@@ -4,8 +4,10 @@
  * Usage (loads .env.local for DATABASE_URL):
  *   pnpm exec tsx scripts/seed-fake.ts [recipientEmail]
  *
- * Idempotent: re-running upserts the same users/friendships and skips
- * duplicate suggestions. Real IMDb IDs are used so titles resolve via TMDB.
+ * Pass your own email to seed for the account you log in with; otherwise it
+ * uses a fake demo address. Idempotent: re-running upserts the same
+ * users/friendships and skips duplicate suggestions. Real IMDb IDs are used
+ * so titles resolve via TMDB.
  */
 import { prisma } from "../src/db";
 import { generateToken } from "../src/lib/tokens";

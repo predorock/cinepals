@@ -128,6 +128,23 @@ pnpm run build   # prisma generate && tsc
 pnpm start       # node dist/server.js
 ```
 
+## End-to-end tests
+
+Playwright drives the real SPA through every flow (auth, display name, friends,
+suggestions, addon, account deletion). Magic-link login is exercised for real by
+reading the email out of the local **Mailpit** trap.
+
+```bash
+just test-e2e          # brings up Postgres + Mailpit, syncs the schema, runs the suite
+just test-e2e-ui       # same, with the interactive Playwright UI
+pnpm run test:e2e       # if Postgres + Mailpit are already running
+```
+
+Tests read config from `.env.local` (DB, `TMDB_API_KEY`, Mailpit), force the dev
+profile, and start the app server themselves (see `playwright.config.ts`). Each
+test uses unique emails, so runs are isolated without resetting the database.
+Specs live in [`e2e/`](./e2e).
+
 ## Deploy on Render
 
 1. Push the repo to GitHub.

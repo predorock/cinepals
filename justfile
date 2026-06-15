@@ -104,6 +104,26 @@ dev: db-up mail-up
 typecheck:
     pnpm exec tsc -p tsconfig.json --noEmit
 
+# ---------------------------------------------------------------------------
+# End-to-end tests (Playwright)
+# ---------------------------------------------------------------------------
+
+# Run the tests (alias for the e2e suite).
+test *args: (test-e2e args)
+
+# Run the e2e suite (brings up Postgres + Mailpit, syncs the schema, then tests).
+# Playwright starts the app server itself (see playwright.config.ts).
+test-e2e *args: db-up mail-up
+    @sleep 2
+    @just push
+    pnpm exec playwright test {{args}}
+
+# Same, but with the interactive Playwright UI.
+test-e2e-ui: db-up mail-up
+    @sleep 2
+    @just push
+    pnpm exec playwright test --ui
+
 # Production build (prisma generate + tsc)
 build:
     pnpm run build

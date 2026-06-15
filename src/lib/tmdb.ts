@@ -64,6 +64,7 @@ interface TmdbSearchItem {
   name?: string; // tv
   overview?: string;
   poster_path?: string | null;
+  backdrop_path?: string | null;
   release_date?: string; // movie
   first_air_date?: string; // tv
 }
@@ -85,6 +86,36 @@ async function tmdbFetch<T>(path: string, params: Record<string, string>): Promi
   return (await res.json()) as T;
 }
 
+/**
+ * Persists a title's metadata into the cache the first time we see it (e.g. at
+ * search time), so later lookups (suggestion lists, addon meta) need no TMDB
+ * call. Never overwrites an existing entry, which may be richer.
+ */
+async function cacheTitle(
+  imdbId: string,
+  type: StremioContentType,
+  item: TmdbSearchItem
+): Promise<void> {
+  const date = item.release_date || item.first_air_date || "";
+  await prisma.titleCache
+    .upsert({
+      where: { imdbId },
+      update: {}, // keep the existing (possibly fuller) entry untouched
+      create: {
+        imdbId,
+        type,
+        name: item.title || item.name || "Untitled",
+        poster: IMG(item.poster_path, "w500"),
+        background: IMG(item.backdrop_path, "w1280"),
+        description: item.overview || undefined,
+        releaseInfo: date ? date.slice(0, 4) : undefined,
+      },
+    })
+    .catch(() => {
+      /* best-effort cache; ignore races/errors */
+    });
+}
+
 /** Searches movies/series on TMDB and resolves IMDb IDs (required by Stremio). */
 export async function searchTitles(
   query: string,
@@ -100,6 +131,8 @@ export async function searchTitles(
     top.map(async (item): Promise<TitleSearchResult | null> => {
       const imdbId = await getImdbId(item.id, type);
       if (!imdbId) return null;
+      // Cache the title now so suggestion lists/meta never need to re-fetch it.
+      await cacheTitle(imdbId, type, item);
       const date = item.release_date || item.first_air_date || "";
       return {
         imdbId,

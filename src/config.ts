@@ -11,14 +11,17 @@ function required(name: string, fallback?: string): string {
 }
 
 // Resolves the public base URL.
-// - When PUBLIC_URL is configured (production), force https so magic-links are
-//   always secure regardless of how the env var was entered (bare host or http://).
-// - Otherwise fall back to the local dev default over http.
+// - When PUBLIC_URL points at a real (non-local) host, force https so magic-links
+//   are always secure regardless of how the env var was entered (bare host or http://).
+// - localhost/127.0.0.1 keep http (local dev, docker, e2e have no TLS).
+// - With PUBLIC_URL unset, fall back to the local dev default over http.
 function resolvePublicUrl(): string {
   const raw = process.env.PUBLIC_URL?.trim();
   if (!raw) return "http://127.0.0.1:8990";
-  const withoutScheme = raw.replace(/^https?:\/\//i, "");
-  return `https://${withoutScheme}`.replace(/\/$/, "");
+  const withoutScheme = raw.replace(/^https?:\/\//i, "").replace(/\/$/, "");
+  const host = withoutScheme.split("/")[0].split(":")[0].toLowerCase();
+  const isLocal = host === "localhost" || host === "127.0.0.1" || host === "0.0.0.0";
+  return `${isLocal ? "http" : "https"}://${withoutScheme}`;
 }
 
 export const config = {

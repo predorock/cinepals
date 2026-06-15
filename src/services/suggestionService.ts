@@ -2,6 +2,7 @@ import { prisma } from "../db";
 import { config } from "../config";
 import { sendEmail, emailLayout } from "../lib/email";
 import { getUserById } from "./userService";
+import { getMetaByImdbId } from "../lib/tmdb";
 import type { StremioContentType } from "../types";
 
 /**
@@ -156,11 +157,48 @@ const userSelect = {
 } as const;
 
 /**
+ * Resolves each suggestion's title name/poster for display. Titles are cached
+ * in TitleCache (populated at search time), so the common path is a single
+ * batched DB read with no TMDB calls. Only genuine cache misses (e.g. legacy or
+ * seeded suggestions) fall back to getMetaByImdbId, which resolves and caches.
+ * Falls back to the raw imdbId if resolution fails entirely.
+ */
+async function withTitles<T extends { imdbId: string; contentType: string }>(
+  rows: T[],
+): Promise<(T & { name: string; poster?: string; year?: string })[]> {
+  if (rows.length === 0) return [];
+
+  const imdbIds = [...new Set(rows.map((r) => r.imdbId))];
+  const cached = await prisma.titleCache.findMany({ where: { imdbId: { in: imdbIds } } });
+  const byId = new Map(cached.map((c) => [c.imdbId, c]));
+
+  return Promise.all(
+    rows.map(async (row) => {
+      const hit = byId.get(row.imdbId);
+      if (hit) {
+        return { ...row, name: hit.name, poster: hit.poster ?? undefined, year: hit.releaseInfo ?? undefined };
+      }
+      // Cache miss: resolve via TMDB (also populates TitleCache for next time).
+      const meta = await getMetaByImdbId(
+        row.imdbId,
+        row.contentType as StremioContentType,
+      ).catch(() => null);
+      return {
+        ...row,
+        name: meta?.name ?? row.imdbId,
+        poster: meta?.poster,
+        year: meta?.releaseInfo,
+      };
+    }),
+  );
+}
+
+/**
  * Suggestions received by the user (status other than "dismissed"),
- * ordered from most recent, with the sender's data.
+ * ordered from most recent, with the sender's data and resolved title.
  */
 export async function listReceived(userId: string) {
-  return prisma.suggestion.findMany({
+  const rows = await prisma.suggestion.findMany({
     where: {
       toUserId: userId,
       status: { not: "dismissed" },
@@ -168,18 +206,20 @@ export async function listReceived(userId: string) {
     orderBy: { createdAt: "desc" },
     include: { fromUser: userSelect },
   });
+  return withTitles(rows);
 }
 
 /**
  * Suggestions sent by the user, ordered from most recent,
- * with the recipient's data.
+ * with the recipient's data and resolved title.
  */
 export async function listSent(userId: string) {
-  return prisma.suggestion.findMany({
+  const rows = await prisma.suggestion.findMany({
     where: { fromUserId: userId },
     orderBy: { createdAt: "desc" },
     include: { toUser: userSelect },
   });
+  return withTitles(rows);
 }
 
 /** Statuses the recipient can set manually. */

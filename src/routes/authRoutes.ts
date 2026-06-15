@@ -32,9 +32,10 @@ function buildAddonUrls(addonToken: string): {
 }
 
 // Rate-limit for magic-link requests: max 5 requests / 15 minutes per IP.
+// Relaxed outside production so the e2e suite (many logins from one IP) isn't throttled.
 const requestLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 5,
+  max: config.isProd ? 5 : 1000,
   standardHeaders: true,
   legacyHeaders: false,
   message: { ok: true },

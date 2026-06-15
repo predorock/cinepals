@@ -5,10 +5,9 @@ services:
     name: stremio-friends
     runtime: node
     plan: free
-    buildCommand: npm install && npm run build
-    # Sync the schema to the DB on every deploy (no migration files needed).
-    # If you adopt Prisma migrations later, switch this to: npx prisma migrate deploy
-    preDeployCommand: npx prisma db push
+    # Free tier doesn't support preDeployCommand, so we sync the schema during
+    # build (DATABASE_URL is available at build time). db push is idempotent.
+    buildCommand: npm install && npm run build && npx prisma db push --accept-data-loss
     startCommand: npm run start
     healthCheckPath: /health
     envVars:

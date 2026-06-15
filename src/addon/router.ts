@@ -55,9 +55,9 @@ addonRouter.use((req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
-/** Extracts a friend id from a catalog id like `sf-friend-<id>`, else undefined. */
+/** Extracts a friend id from a catalog id like `cinepals-friend-<id>`, else undefined. */
 function parseFriendId(catalogId: string): string | undefined {
-  const prefix = "sf-friend-";
+  const prefix = "cinepals-friend-";
   return catalogId.startsWith(prefix) ? catalogId.slice(prefix.length) : undefined;
 }
 

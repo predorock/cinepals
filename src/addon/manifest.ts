@@ -22,13 +22,13 @@ export async function buildManifest(token?: string) {
   const catalogs: CatalogEntry[] = [
     {
       type: "movie",
-      id: "sf-friends",
+      id: "cinepals-friends",
       name: "🎬 Suggested by friends",
       extra: [{ name: "search", isRequired: false }],
     },
     {
       type: "series",
-      id: "sf-friends",
+      id: "cinepals-friends",
       name: "📺 Series from friends",
       extra: [{ name: "search", isRequired: false }],
     },
@@ -42,17 +42,17 @@ export async function buildManifest(token?: string) {
       for (const f of friends) {
         const name = f.displayName || f.email;
         catalogs.push(
-          { type: "movie", id: `sf-friend-${f.id}`, name: `🎬 ${name}` },
-          { type: "series", id: `sf-friend-${f.id}`, name: `📺 ${name}` }
+          { type: "movie", id: `cinepals-friend-${f.id}`, name: `🎬 ${name}` },
+          { type: "series", id: `cinepals-friend-${f.id}`, name: `📺 ${name}` }
         );
       }
     }
   }
 
   return {
-    id: "com.stremiofriends.addon",
+    id: "com.cinepals.addon",
     version: "1.0.0",
-    name: "Stremio Friends",
+    name: "Cinepals",
     description: "Movies and series suggested by your friends",
     logo: `${config.publicUrl}/logo.png`,
     resources: ["catalog", "meta"],

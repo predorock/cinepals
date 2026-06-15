@@ -1,4 +1,4 @@
-# 🎬 Stremio Friends
+# 🎬 Cinepals
 
 A Stremio addon that lets you add friends by email, recommend movies and series to each other, and see them appear as your own personal catalog inside Stremio.
 
@@ -88,7 +88,7 @@ The fastest way: Postgres + app with hot-reload + Adminer, all with one command.
    On startup the app runs `prisma db push` (creates the tables) and starts in watch mode.
 
 3. Open `http://127.0.0.1:8990/configure`. The login link appears in the logs (`docker compose logs -f app`).
-   To inspect the DB: Adminer at `http://127.0.0.1:8080` (server `db`, user/pass `postgres`, database `stremio_friends`).
+   To inspect the DB: Adminer at `http://127.0.0.1:8080` (server `db`, user/pass `postgres`, database `cinepals`).
 
 4. Stop: `docker compose down` (add `-v` to also delete the DB data).
 
@@ -97,7 +97,7 @@ The fastest way: Postgres + app with hot-reload + Adminer, all with one command.
 1. **Requirements**: Node ≥ 18 and a local PostgreSQL (or Docker).
 
    ```bash
-   docker run --name sf-pg -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=stremio_friends -p 5555:5432 -d postgres:16
+   docker run --name cinepals-pg -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=cinepals -p 5555:5432 -d postgres:16
    ```
 
 2. **Environment variables**: copy `.env.example` to `.env` and fill in the values (at least `DATABASE_URL`, `JWT_SECRET`, `TMDB_API_KEY`).
@@ -132,7 +132,7 @@ npm start       # node dist/server.js
 
 1. Push the repo to GitHub.
 2. On Render: **New → Blueprint** and select the repo (uses [`render.yaml`](./render.yaml)). It creates the web service + the Postgres database.
-3. Set the `sync: false` env vars: `PUBLIC_URL` (= public URL of the service, e.g. `https://stremio-friends.onrender.com`), `TMDB_API_KEY`, `RESEND_API_KEY`, `EMAIL_FROM`.
+3. Set the `sync: false` env vars: `PUBLIC_URL` (= public URL of the service, e.g. `https://cinepals.onrender.com`), `TMDB_API_KEY`, `RESEND_API_KEY`, `EMAIL_FROM`.
 4. The `preDeployCommand` runs `prisma migrate deploy` (migration files are required: create the init locally with `npx prisma migrate dev --name init` and commit it).
 5. HTTPS is automatic → Stremio requirement satisfied.
 

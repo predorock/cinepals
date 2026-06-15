@@ -10,10 +10,15 @@ export interface EmailMessage {
 /**
  * Sends a transactional email.
  * - In production with RESEND_API_KEY: uses the Resend HTTP API.
- * - Otherwise (dev): prints the content to the console, so magic-links are clickable from the logs.
+ * - In dev with SMTP_URL (e.g. Mailpit): sends via SMTP to the local mail trap.
+ * - Otherwise: prints the content to the console, so magic-links are clickable from the logs.
  */
 export async function sendEmail(msg: EmailMessage): Promise<void> {
   if (!config.resendApiKey) {
+    if (config.smtpUrl) {
+      await sendViaSmtp(msg);
+      return;
+    }
     console.log("\n========== EMAIL (dev, not sent) ==========");
     console.log(`To: ${msg.to}`);
     console.log(`Subject: ${msg.subject}`);
@@ -43,6 +48,27 @@ export async function sendEmail(msg: EmailMessage): Promise<void> {
   }
 }
 
+/**
+ * Sends via SMTP to a local mail trap (Mailpit/MailHog). nodemailer is imported
+ * dynamically so it's never loaded on the production (Resend) path.
+ */
+async function sendViaSmtp(msg: EmailMessage): Promise<void> {
+  const { createTransport } = await import("nodemailer");
+  const transport = createTransport(config.smtpUrl);
+  try {
+    await transport.sendMail({
+      from: config.emailFrom,
+      to: msg.to,
+      subject: msg.subject,
+      html: msg.html,
+      text: msg.text ?? stripHtml(msg.html),
+    });
+    console.log(`📬 Email sent to mail trap → ${msg.to} ("${msg.subject}") — inbox: http://127.0.0.1:8025`);
+  } catch (err) {
+    console.error(`SMTP send failed (${config.smtpUrl}):`, err);
+  }
+}
+
 function stripHtml(html: string): string {
   return html
     .replace(/<style[\s\S]*?<\/style>/gi, "")
@@ -55,7 +81,7 @@ function stripHtml(html: string): string {
 export function emailLayout(title: string, bodyHtml: string): string {
   return `<!doctype html><html><body style="font-family:system-ui,Arial,sans-serif;background:#0f0f17;padding:24px;color:#e6e6f0">
   <div style="max-width:520px;margin:0 auto;background:#1a1a28;border-radius:12px;padding:28px">
-    <h1 style="font-size:18px;color:#7b6cf6;margin:0 0 16px">🎬 Stremio Friends</h1>
+    <h1 style="font-size:18px;color:#7b6cf6;margin:0 0 16px">🎬 Cinepals</h1>
     <h2 style="font-size:16px;margin:0 0 12px">${title}</h2>
     ${bodyHtml}
     <p style="font-size:12px;color:#8a8aa3;margin-top:24px">If you didn't request this email, you can ignore it.</p>

@@ -1,4 +1,4 @@
-# Stremio Friends — development commands (https://github.com/casey/just)
+# Cinepals — development commands (https://github.com/casey/just)
 #
 # Usage:  just <recipe>      |     just --list for the full list
 #
@@ -55,6 +55,22 @@ studio:
     npx prisma studio
 
 # ---------------------------------------------------------------------------
+# Mail trap (Mailpit — catches dev emails, inbox at http://127.0.0.1:8025)
+# ---------------------------------------------------------------------------
+
+# Start the Mailpit mail trap
+mail-up:
+    docker compose up -d mailpit
+
+# Stop the Mailpit mail trap
+mail-down:
+    docker compose stop mailpit
+
+# Open the Mailpit inbox in the browser
+mail-open:
+    open http://127.0.0.1:8025
+
+# ---------------------------------------------------------------------------
 # Prisma
 # ---------------------------------------------------------------------------
 
@@ -74,8 +90,8 @@ migrate name:
 # Development and build
 # ---------------------------------------------------------------------------
 
-# Start in development with hot-reload (also starts the database)
-dev: db-up
+# Start in development with hot-reload (also starts the database + mail trap)
+dev: db-up mail-up
     @sleep 2
     npx tsx watch src/server.ts
 

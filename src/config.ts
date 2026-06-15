@@ -19,8 +19,10 @@ export const config = {
   jwtSecret: required("JWT_SECRET", "dev-insecure-secret"),
   tmdbApiKey: required("TMDB_API_KEY"),
   resendApiKey: required("RESEND_API_KEY"),
-  emailFrom: process.env.EMAIL_FROM ?? "Stremio Friends <noreply@example.com>",
-  sessionCookieName: "sf_session",
+  // Local mail trap (e.g. Mailpit). Used in dev when RESEND_API_KEY is empty.
+  smtpUrl: required("SMTP_URL"),
+  emailFrom: process.env.EMAIL_FROM ?? "Cinepals <noreply@example.com>",
+  sessionCookieName: "cinepals_session",
   sessionTtlDays: 30,
   magicLinkTtlMinutes: 15,
 };

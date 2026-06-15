@@ -27,7 +27,7 @@ export async function requestMagicLink(email: string): Promise<void> {
 
   const bodyHtml = `
     <p style="font-size:14px;line-height:1.5;margin:0 0 20px">
-      Hi! You requested to sign in to <strong>Stremio Friends</strong>.
+      Hi! You requested to sign in to <strong>Cinepals</strong>.
       Click the button below to enter: the link is valid for
       ${config.magicLinkTtlMinutes} minutes and can be used only once.
     </p>
@@ -46,11 +46,11 @@ export async function requestMagicLink(email: string): Promise<void> {
 
   const html = emailLayout("Your sign-in link", bodyHtml);
   const text =
-    `Sign in to Stremio Friends by opening this link (valid ${config.magicLinkTtlMinutes} minutes, single use):\n${verifyUrl}`;
+    `Sign in to Cinepals by opening this link (valid ${config.magicLinkTtlMinutes} minutes, single use):\n${verifyUrl}`;
 
   await sendEmail({
     to: user.email,
-    subject: "Your sign-in link for Stremio Friends",
+    subject: "Your sign-in link for Cinepals",
     html,
     text,
   });

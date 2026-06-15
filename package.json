@@ -1,5 +1,5 @@
 {
-  "name": "stremio-friends",
+  "name": "cinepals",
   "version": "1.0.0",
   "description": "Stremio addon that lets users add friends via email and recommend movies to each other",
   "license": "MIT",
@@ -22,6 +22,7 @@
     "express": "^4.21.2",
     "express-rate-limit": "^7.4.1",
     "jsonwebtoken": "^9.0.2",
+    "nodemailer": "^9.0.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {
@@ -30,6 +31,7 @@
     "@types/express": "^4.17.21",
     "@types/jsonwebtoken": "^9.0.7",
     "@types/node": "^20.17.0",
+    "@types/nodemailer": "^8.0.1",
     "prisma": "^5.22.0",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2"

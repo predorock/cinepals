@@ -1,4 +1,4 @@
-# Stremio Friends — Technical Plan
+# Cinepals — Technical Plan
 
 A Stremio addon that lets users add each other as friends by email, recommend movies to each other, and see the suggestions they receive as catalogs inside Stremio.
 
@@ -18,7 +18,7 @@ A Stremio addon **is not an installed app**: it's a **stateless HTTP service** t
 **The solution (official pattern):** embed a **user token in the addon's URL**. Instead of the standard URL `https://domain.com/manifest.json`, each user installs a personalized URL:
 
 ```
-https://stremio-friends.onrender.com/u/{TOKEN}/manifest.json
+https://cinepals.onrender.com/u/{TOKEN}/manifest.json
 ```
 
 The `TOKEN` identifies the user. When Stremio calls the catalog, the URL becomes `.../u/{TOKEN}/catalog/movie/friends-suggestions.json`, and the backend uses the token to figure out who the user is and return their suggestions. This, combined with a database and an email-based identity, is what makes the "friends" feature possible.
@@ -33,7 +33,7 @@ Three components that live in the same Node/Express process on Render:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     Stremio Friends (Node + TS)              │
+│                     Cinepals (Node + TS)              │
 │                                                              │
 │   ┌──────────────┐   ┌──────────────┐   ┌────────────────┐   │
 │   │ Stremio Addon│   │   REST API   │   │  Web /configure│   │
@@ -181,11 +181,11 @@ Input validation with Zod; rate-limit on `auth/request` and `friends/request` to
 
 ```jsonc
 {
-  "id": "com.stremiofriends.addon",
+  "id": "com.cinepals.addon",
   "version": "1.0.0",
-  "name": "Stremio Friends",
+  "name": "Cinepals",
   "description": "Movies and series suggested by your friends",
-  "logo": "https://stremio-friends.onrender.com/logo.png",
+  "logo": "https://cinepals.onrender.com/logo.png",
   "resources": ["catalog", "meta"],
   "types": ["movie", "series"],
   "catalogs": [

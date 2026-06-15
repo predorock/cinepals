@@ -5,7 +5,7 @@ import { prisma } from "./db";
 const app = createApp();
 
 const server = app.listen(config.port, () => {
-  console.log(`🎬 Stremio Friends listening on ${config.publicUrl} (port ${config.port})`);
+  console.log(`🎬 Cinepals listening on ${config.publicUrl} (port ${config.port})`);
   console.log(`   Configuration page: ${config.publicUrl}/configure`);
 });
 

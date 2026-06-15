@@ -1,4 +1,4 @@
-/* Stremio Friends — frontend SPA (vanilla JS) */
+/* Cinepals — frontend SPA (vanilla JS) */
 (() => {
   "use strict";
 

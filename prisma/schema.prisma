@@ -1,4 +1,4 @@
-// Prisma schema per Stremio Friends
+// Prisma schema per Cinepals
 // Email normalizzate in lowercase a livello applicativo (portabilità multi-DB).
 
 generator client {

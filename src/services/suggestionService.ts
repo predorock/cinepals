@@ -104,7 +104,7 @@ async function notifyRecipient(
     const bodyHtml = `
       <p style="font-size:14px;line-height:1.5;margin:0 0 12px">
         <strong>${escapeHtml(fromName)}</strong> recommended a title for you to watch on
-        <strong>Stremio Friends</strong>.
+        <strong>Cinepals</strong>.
       </p>
       ${noteHtml}
       <p style="font-size:14px;line-height:1.5;margin:0 0 20px">
@@ -114,7 +114,7 @@ async function notifyRecipient(
         <a href="${configureUrl}"
            style="display:inline-block;background:#7b6cf6;color:#ffffff;text-decoration:none;
                   font-weight:600;font-size:14px;padding:12px 24px;border-radius:8px">
-          Open Stremio Friends
+          Open Cinepals
         </a>
       </p>
       <p style="font-size:12px;color:#8a8aa3;line-height:1.5;margin:0">
@@ -125,7 +125,7 @@ async function notifyRecipient(
 
     const html = emailLayout("You have a new recommendation!", bodyHtml);
     const text =
-      `${fromName} recommended a title for you on Stremio Friends.` +
+      `${fromName} recommended a title for you on Cinepals.` +
       (note ? `\n"${note}"` : "") +
       `\nOpen: ${configureUrl}`;
 

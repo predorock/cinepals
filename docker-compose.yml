@@ -5,23 +5,23 @@
 # in the root: docker compose reads it automatically for variable substitution.
 #
 #   App:     http://127.0.0.1:8990/configure
-#   Adminer: http://127.0.0.1:8080   (server: db, user: postgres, pass: postgres, db: stremio_friends)
+#   Adminer: http://127.0.0.1:8080   (server: db, user: postgres, pass: postgres, db: cinepals)
 
 services:
   db:
     image: postgres:16-alpine
-    container_name: sf-db
+    container_name: cinepals-db
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: stremio_friends
+      POSTGRES_DB: cinepals
     ports:
       # Host 5555 -> container 5432 (the app inside Docker still uses db:5432).
       - "5555:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d stremio_friends"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d cinepals"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -30,21 +30,25 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.dev
-    container_name: sf-app
+    container_name: cinepals-app
     depends_on:
       db:
         condition: service_healthy
+      mailpit:
+        condition: service_started
     ports:
       - "8990:8990"
     environment:
       NODE_ENV: development
       PORT: "8990"
       PUBLIC_URL: http://127.0.0.1:8990
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/stremio_friends?schema=public
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/cinepals?schema=public
       JWT_SECRET: dev-insecure-secret-change-me
       TMDB_API_KEY: ${TMDB_API_KEY:-}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
-      EMAIL_FROM: ${EMAIL_FROM:-Stremio Friends <noreply@example.com>}
+      EMAIL_FROM: ${EMAIL_FROM:-Cinepals <noreply@example.com>}
+      # When RESEND_API_KEY is empty, emails are sent here (Mailpit) instead of the console.
+      SMTP_URL: smtp://mailpit:1025
     volumes:
       # Code mounted from the host for hot-reload; node_modules stays the one from the image.
       - ./:/app
@@ -52,10 +56,22 @@ services:
     # db push: syncs the schema to the DB (without migration files) and generates the client.
     command: sh -c "npx prisma db push && npm run dev"
 
+  # Local mail trap: catches all outgoing email (no real delivery).
+  #   SMTP:    mailpit:1025 (inside Docker) / 127.0.0.1:1025 (from host)
+  #   Inbox:   http://127.0.0.1:8025
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: cinepals-mailpit
+    ports:
+      - "1025:1025" # SMTP
+      - "8025:8025" # Web UI
+    environment:
+      MP_MAX_MESSAGES: "500"
+
   # Web UI to inspect the database (optional).
   adminer:
     image: adminer:4
-    container_name: sf-adminer
+    container_name: cinepals-adminer
     depends_on:
       - db
     ports:

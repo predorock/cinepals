@@ -148,10 +148,10 @@ async function sendInviteEmail(
   const link = `${config.publicUrl}/configure`;
   const who = fromLabel ? `<strong>${escapeHtml(fromLabel)}</strong>` : "A friend";
   const body = `
-    <p style="font-size:14px;line-height:1.5">${who} wants to add you as a friend on Stremio Friends to share movie and TV show recommendations.</p>
+    <p style="font-size:14px;line-height:1.5">${who} wants to add you as a friend on Cinepals to share movie and TV show recommendations.</p>
     <p style="font-size:14px;line-height:1.5">Open the configuration page to accept the request and start exchanging suggestions:</p>
     <p style="margin:20px 0">
-      <a href="${link}" style="display:inline-block;background:#7b6cf6;color:#fff;text-decoration:none;padding:12px 20px;border-radius:8px;font-size:14px">Open Stremio Friends</a>
+      <a href="${link}" style="display:inline-block;background:#7b6cf6;color:#fff;text-decoration:none;padding:12px 20px;border-radius:8px;font-size:14px">Open Cinepals</a>
     </p>
     <p style="font-size:12px;color:#8a8aa3">Or copy this link: ${link}</p>
   `;
@@ -159,7 +159,7 @@ async function sendInviteEmail(
   try {
     await sendEmail({
       to: toEmail,
-      subject: "You have a new friend request on Stremio Friends",
+      subject: "You have a new friend request on Cinepals",
       html: emailLayout("New friend request", body),
     });
   } catch (err) {

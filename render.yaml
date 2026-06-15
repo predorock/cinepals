@@ -7,16 +7,21 @@ services:
     plan: free
     # Free tier doesn't support preDeployCommand, so we sync the schema during
     # build (DATABASE_URL is available at build time). db push is idempotent.
-    # corepack enable activates the pnpm version pinned in package.json.
-    # NODE_ENV=production makes pnpm skip devDependencies, but the build needs
-    # them (prisma, typescript). --prod=false forces them in for the build.
-    buildCommand: corepack enable && pnpm install --prod=false && pnpm run build && pnpm exec prisma db push --accept-data-loss
+    # Use `corepack pnpm` (not `corepack enable`): enable tries to symlink into
+    # /usr/bin, which is read-only on Render (EROFS). corepack runs the pnpm
+    # version pinned in package.json directly. NODE_ENV=production makes pnpm
+    # skip devDependencies, but the build needs them (prisma, typescript), so
+    # --prod=false forces them in.
+    buildCommand: corepack pnpm install --prod=false && corepack pnpm run build && corepack pnpm exec prisma db push --accept-data-loss
     # Run the built server directly so runtime needs no package manager.
     startCommand: node dist/server.js
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
         value: production
+      # Don't prompt to download pnpm in the non-interactive build.
+      - key: COREPACK_ENABLE_DOWNLOAD_PROMPT
+        value: "0"
       - key: DATABASE_URL
         fromDatabase:
           name: cinepals-db

@@ -7,6 +7,7 @@ import { authRouter } from "./routes/authRoutes";
 import { friendRouter } from "./routes/friendRoutes";
 import { suggestionRouter } from "./routes/suggestionRoutes";
 import { searchRouter } from "./routes/searchRoutes";
+import { internalRouter } from "./routes/internalRoutes";
 import { addonRouter } from "./addon/router";
 import { config } from "./config";
 
@@ -39,6 +40,9 @@ export function createApp() {
   app.use("/api/friends", friendRouter);
   app.use("/api/suggestions", suggestionRouter);
   app.use("/api/search", searchRouter);
+
+  // Internal trigger for scheduled jobs (token-protected, server-to-server).
+  app.use("/internal", internalRouter);
 
   const publicDir = path.join(__dirname, "..", "public");
 

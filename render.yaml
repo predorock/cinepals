@@ -36,6 +36,8 @@ services:
         sync: false
       - key: EMAIL_FROM
         sync: false
+      - key: CRON_SECRET
+        sync: false # must match the CRON_SECRET secret in the GitHub Actions digest workflow
 
 databases:
   - name: cinepals-db

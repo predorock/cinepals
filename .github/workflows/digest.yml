@@ -1,0 +1,41 @@
+name: Daily suggestion digest
+
+# Sends the 18:00 Europe/Rome suggestion digest by pinging the app's protected
+# endpoint. GitHub cron is UTC-only, so we fire at both 16:00 and 17:00 UTC and
+# gate on the actual Rome local hour — exactly one matches per DST season.
+on:
+  schedule:
+    - cron: "0 16 * * *" # 18:00 Europe/Rome during CEST (summer)
+    - cron: "0 17 * * *" # 18:00 Europe/Rome during CET (winter)
+  workflow_dispatch: {} # allow manual trigger (bypasses the hour gate)
+
+jobs:
+  digest:
+    name: Trigger digest
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send digest at 18:00 Europe/Rome
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          TARGET_URL: https://cinepals.xyz/internal/run-digest
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            HOUR=$(TZ=Europe/Rome date +%H)
+            if [ "$HOUR" != "18" ]; then
+              echo "Rome local hour is $HOUR (not 18) — skipping this firing."
+              exit 0
+            fi
+          fi
+          if [ -z "${CRON_SECRET}" ]; then
+            echo "CRON_SECRET secret is not set in the repository." >&2
+            exit 1
+          fi
+          echo "Triggering daily digest…"
+          code=$(curl -sS -m 60 -o /tmp/resp.json -w '%{http_code}' \
+            -X POST "$TARGET_URL" \
+            -H "Authorization: Bearer ${CRON_SECRET}")
+          echo "HTTP ${code}"
+          cat /tmp/resp.json 2>/dev/null || true
+          echo
+          test "${code}" = "200"

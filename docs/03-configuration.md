@@ -20,6 +20,7 @@ All runtime configuration is read from environment variables and centralized in
 | `RESEND_API_KEY` | for real email | — | Resend API key. When set, transactional email is sent via the Resend HTTP API. |
 | `SMTP_URL` | dev email | — | SMTP URL (e.g. `smtp://127.0.0.1:1025` for Mailpit). Used only when `RESEND_API_KEY` is empty. |
 | `EMAIL_FROM` | no | `Cinepals <noreply@example.com>` | From address/name for outgoing email. |
+| `CRON_SECRET` | for digests | — | Bearer token guarding `POST /internal/run-digest` (the daily suggestion digest). Must match the `CRON_SECRET` stored in the scheduler (GitHub Actions). Unset → the endpoint rejects all calls. |
 | `MAILPIT_URL` | tests only | `http://127.0.0.1:8025` | Mailpit REST base used by the e2e suite to read magic-links. |
 
 > Values not visible in the source are marked `[TO VERIFY]`. None apply here — every

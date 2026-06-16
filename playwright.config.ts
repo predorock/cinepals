@@ -34,6 +34,9 @@ process.env.NODE_ENV = "development";
 process.env.PUBLIC_URL = "http://127.0.0.1:8990";
 delete process.env.RESEND_API_KEY; // ensure SMTP/Mailpit path, never a real send
 
+// Fixed secret so the e2e digest test can call the protected internal endpoint.
+process.env.CRON_SECRET = "test-cron-secret";
+
 const PORT = process.env.PORT ?? "8990";
 const BASE_URL = `http://127.0.0.1:${PORT}`;
 

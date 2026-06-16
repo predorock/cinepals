@@ -43,6 +43,8 @@ export const config = {
   // Local mail trap (e.g. Mailpit). Used in dev when RESEND_API_KEY is empty.
   smtpUrl: required("SMTP_URL"),
   emailFrom: process.env.EMAIL_FROM ?? "Cinepals <noreply@example.com>",
+  // Bearer token guarding the internal digest trigger (POST /internal/run-digest).
+  cronSecret: required("CRON_SECRET"),
   sessionCookieName: "cinepals_session",
   sessionTtlDays: 30,
   magicLinkTtlMinutes: 15,

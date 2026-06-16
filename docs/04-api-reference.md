@@ -114,4 +114,25 @@ curl http://127.0.0.1:8990/u/<addonToken>/catalog/movie/cinepals-friends.json
 
 ---
 
+## Internal — `/internal`
+
+Server-to-server endpoints guarded by a `CRON_SECRET` bearer token (not for browsers).
+
+| Method | Path | Auth | Response |
+|--------|------|------|----------|
+| POST | `/run-digest` | `Authorization: Bearer <CRON_SECRET>` | `{ ok, recipients, emails, suggestions }` |
+
+Sends the **daily suggestion digest**: one email per recipient bundling all their
+pending (not-yet-notified, non-dismissed) suggestions, then marks them notified so they
+aren't emailed again. Idempotent — re-running sends nothing if there's nothing pending.
+Triggered by the scheduled workflow `.github/workflows/digest.yml` at 18:00 Europe/Rome.
+
+```bash
+curl -X POST https://cinepals.xyz/internal/run-digest \
+  -H "Authorization: Bearer $CRON_SECRET"
+# → {"ok":true,"recipients":1,"emails":1,"suggestions":2}
+```
+
+---
+
 Next: [Deployment](05-deployment.md) · [Contributing](06-contributing.md)

@@ -70,6 +70,9 @@ model Suggestion {
   note        String?
   status      SuggestionStatus @default(new)
   createdAt   DateTime         @default(now())
+  // Set when the suggestion has been included in a digest email to the recipient.
+  // null = pending, picked up by the next daily digest run (keeps digests idempotent).
+  notifiedAt  DateTime?
 
   fromUser User @relation("FromUser", fields: [fromUserId], references: [id], onDelete: Cascade)
   toUser   User @relation("ToUser", fields: [toUserId], references: [id], onDelete: Cascade)
@@ -77,6 +80,7 @@ model Suggestion {
   @@unique([fromUserId, toUserId, imdbId])
   @@index([toUserId, status])
   @@index([fromUserId])
+  @@index([notifiedAt])
   @@map("suggestions")
 }
 

@@ -1,7 +1,6 @@
 import { prisma } from "../db";
 import { config } from "../config";
 import { sendEmail, emailLayout } from "../lib/email";
-import { getUserById } from "./userService";
 import { getMetaByImdbId } from "../lib/tmdb";
 import type { StremioContentType } from "../types";
 
@@ -72,45 +71,75 @@ export async function createSuggestion(
     },
   });
 
-  await notifyRecipient(fromUserId, toUserId, note);
-
+  // No email here: the recipient is notified once a day via the digest
+  // (see sendDailyDigests), so multiple suggestions arrive as a single email.
   return { status: "created" };
 }
 
+export interface DigestResult {
+  recipients: number; // users that had pending suggestions
+  emails: number; // emails actually sent
+  suggestions: number; // suggestions included across all emails
+}
+
 /**
- * Sends the notification email to the suggestion recipient.
- * Sending errors must not make the suggestion creation fail.
+ * Sends the daily digest: one email per recipient bundling all of their pending
+ * (not-yet-notified, non-dismissed) suggestions. Marks them notifiedAt on success
+ * so they're never emailed twice; failures are left pending and retried next run.
+ * Intended to be triggered once a day (see POST /internal/run-digest).
  */
-async function notifyRecipient(
-  fromUserId: string,
-  toUserId: string,
-  note?: string
-): Promise<void> {
-  try {
-    const [fromUser, toUser] = await Promise.all([
-      getUserById(fromUserId),
-      getUserById(toUserId),
-    ]);
-    if (!toUser) return;
+export async function sendDailyDigests(): Promise<DigestResult> {
+  const pending = await prisma.suggestion.findMany({
+    where: { notifiedAt: null, status: { not: "dismissed" } },
+    orderBy: { createdAt: "asc" },
+    include: {
+      fromUser: { select: { email: true, displayName: true } },
+      toUser: { select: { email: true, displayName: true } },
+    },
+  });
+  if (pending.length === 0) return { recipients: 0, emails: 0, suggestions: 0 };
 
-    const fromName = fromUser?.displayName?.trim() || fromUser?.email || "A friend";
-    const configureUrl = `${config.publicUrl}/configure`;
+  // Group by recipient.
+  const byRecipient = new Map<string, typeof pending>();
+  for (const s of pending) {
+    const list = byRecipient.get(s.toUserId) ?? [];
+    list.push(s);
+    byRecipient.set(s.toUserId, list);
+  }
 
-    const noteHtml = note
-      ? `<p style="font-size:14px;line-height:1.5;margin:0 0 20px;color:#c8c8db">
-           <em>"${escapeHtml(note)}"</em>
-         </p>`
-      : "";
+  const configureUrl = `${config.publicUrl}/configure`;
+  let emails = 0;
+  let suggestions = 0;
+
+  for (const [, items] of byRecipient) {
+    const toEmail = items[0].toUser.email;
+    const enriched = await withTitles(items); // resolves titles (cache → TMDB)
+
+    const rows = enriched
+      .map((s) => {
+        const author = s.fromUser.displayName?.trim() || s.fromUser.email;
+        const typeLabel = s.contentType === "series" ? "📺 Series" : "🎬 Movie";
+        const year = s.year ? ` <span style="color:#8a8aa3">(${escapeHtml(s.year)})</span>` : "";
+        const note = s.note
+          ? `<div style="font-size:13px;color:#c8c8db;margin-top:4px"><em>"${escapeHtml(s.note)}"</em></div>`
+          : "";
+        return `<li style="margin:0 0 14px;list-style:none">
+            <strong>${escapeHtml(s.name)}</strong>${year}
+            <div style="font-size:13px;color:#8a8aa3">${typeLabel} · from ${escapeHtml(author)}</div>
+            ${note}
+          </li>`;
+      })
+      .join("");
+
+    const count = items.length;
+    const headline =
+      count === 1
+        ? "A friend suggested a title for you to watch"
+        : `Your friends suggested ${count} titles for you to watch`;
 
     const bodyHtml = `
-      <p style="font-size:14px;line-height:1.5;margin:0 0 12px">
-        <strong>${escapeHtml(fromName)}</strong> recommended a title for you to watch on
-        <strong>Cinepals</strong>.
-      </p>
-      ${noteHtml}
-      <p style="font-size:14px;line-height:1.5;margin:0 0 20px">
-        You'll find the suggestion in your personal catalog inside Stremio.
-      </p>
+      <p style="font-size:14px;line-height:1.5;margin:0 0 16px">${headline} on <strong>Cinepals</strong>:</p>
+      <ul style="padding:0;margin:0 0 20px">${rows}</ul>
       <p style="margin:0 0 20px">
         <a href="${configureUrl}"
            style="display:inline-block;background:#7b6cf6;color:#ffffff;text-decoration:none;
@@ -119,26 +148,40 @@ async function notifyRecipient(
         </a>
       </p>
       <p style="font-size:12px;color:#8a8aa3;line-height:1.5;margin:0">
-        If the button doesn't work, copy and paste this link into your browser:<br>
-        <a href="${configureUrl}" style="color:#7b6cf6;word-break:break-all">${configureUrl}</a>
-      </p>
-    `;
+        They're also waiting in your personal catalog inside Stremio.
+      </p>`;
 
-    const html = emailLayout("You have a new recommendation!", bodyHtml);
-    const text =
-      `${fromName} recommended a title for you on Cinepals.` +
-      (note ? `\n"${note}"` : "") +
-      `\nOpen: ${configureUrl}`;
-
-    await sendEmail({
-      to: toUser.email,
-      subject: `${fromName} recommended something for you to watch`,
-      html,
-      text,
+    const textLines = enriched.map((s) => {
+      const author = s.fromUser.displayName?.trim() || s.fromUser.email;
+      const year = s.year ? ` (${s.year})` : "";
+      const note = s.note ? ` — "${s.note}"` : "";
+      return `• ${s.name}${year} — from ${author}${note}`;
     });
-  } catch (err) {
-    console.error("Suggestion email sending failed:", err);
+    const text = `${headline} on Cinepals:\n\n${textLines.join("\n")}\n\nOpen: ${configureUrl}`;
+
+    try {
+      await sendEmail({
+        to: toEmail,
+        subject:
+          count === 1
+            ? "You have a new suggestion on Cinepals"
+            : `You have ${count} new suggestions on Cinepals`,
+        html: emailLayout("Your suggestions", bodyHtml),
+        text,
+      });
+      await prisma.suggestion.updateMany({
+        where: { id: { in: items.map((i) => i.id) } },
+        data: { notifiedAt: new Date() },
+      });
+      emails += 1;
+      suggestions += count;
+    } catch (err) {
+      // Leave notifiedAt null so this recipient is retried on the next run.
+      console.error(`Digest email to ${toEmail} failed:`, err);
+    }
   }
+
+  return { recipients: byRecipient.size, emails, suggestions };
 }
 
 /** Minimal escape to interpolate user text into the email HTML. */

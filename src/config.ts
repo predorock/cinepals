@@ -1,6 +1,12 @@
 // Centralized configuration read from environment variables.
 // Locally loads .env if present (dotenv dependency not required: use --env-file or the Render environment).
 
+// App version, read from package.json so the Stremio manifest always reports the
+// same version. "../package.json" resolves under the repo root from both src/
+// (tsx) and dist/ (compiled output) since those dirs are siblings of the root.
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const pkg = require("../package.json") as { version: string };
+
 function required(name: string, fallback?: string): string {
   const v = process.env[name] ?? fallback;
   if (v === undefined || v === "") {
@@ -25,6 +31,7 @@ function resolvePublicUrl(): string {
 }
 
 export const config = {
+  appVersion: pkg.version,
   port: parseInt(process.env.PORT ?? "8990", 10),
   nodeEnv: process.env.NODE_ENV ?? "development",
   isProd: (process.env.NODE_ENV ?? "development") === "production",

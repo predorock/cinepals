@@ -51,7 +51,7 @@ export async function buildManifest(token?: string) {
 
   return {
     id: "com.cinepals.addon",
-    version: "1.0.0",
+    version: config.appVersion,
     name: "Cinepals",
     description: "Movies and series suggested by your friends",
     logo: `${config.publicUrl}/logo.png`,

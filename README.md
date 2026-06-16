@@ -2,6 +2,7 @@
 
 > A Stremio addon where you add friends by email and recommend movies & series to each other — each user gets a personal catalog built from their friends' suggestions.
 
+[![CI](https://github.com/predorock/cinepals/actions/workflows/ci.yml/badge.svg)](https://github.com/predorock/cinepals/actions/workflows/ci.yml)
 ![version](https://img.shields.io/badge/version-1.0.0-blue)
 ![node](https://img.shields.io/badge/node-22-339933?logo=node.js&logoColor=white)
 ![license](https://img.shields.io/badge/license-MIT-green)
@@ -90,4 +91,4 @@ Branch off `main`, run `pnpm run typecheck`, `pnpm run build`, and `just test`, 
 
 ## License
 
-MIT — declared in [`package.json`](package.json). _(No `LICENSE` file is present in the repo yet — [TO VERIFY] / add one.)_
+[MIT](LICENSE)

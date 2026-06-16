@@ -1,5 +1,9 @@
 import { test, expect } from "@playwright/test";
+import fs from "fs";
 import { login, uniqueEmail } from "./helpers/auth";
+
+// Read from the repo root (Playwright runs with cwd = project root).
+const pkgVersion = JSON.parse(fs.readFileSync("package.json", "utf8")).version as string;
 
 test("the personal Stremio addon manifest and catalog respond", async ({ page, request }) => {
   const email = uniqueEmail("addon");
@@ -15,6 +19,8 @@ test("the personal Stremio addon manifest and catalog respond", async ({ page, r
   expect(manifest.id).toBeTruthy();
   expect(manifest.name).toBeTruthy();
   expect(Array.isArray(manifest.catalogs)).toBeTruthy();
+  // The Stremio plugin version is kept in sync with package.json.
+  expect(manifest.version).toBe(pkgVersion);
 
   // Catalog: the first declared catalog returns a metas array.
   const base = manifestUrl.replace(/\/manifest\.json$/, "");

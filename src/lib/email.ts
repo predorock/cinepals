@@ -85,5 +85,11 @@ export function emailLayout(title: string, bodyHtml: string): string {
     <h2 style="font-size:16px;margin:0 0 12px">${title}</h2>
     ${bodyHtml}
     <p style="font-size:12px;color:#8a8aa3;margin-top:24px">If you didn't request this email, you can ignore it.</p>
+    <hr style="border:none;border-top:1px solid #2a2a3d;margin:20px 0 12px" />
+    <p style="font-size:11px;color:#8a8aa3;margin:0">
+      Cinepals — an unofficial addon for Stremio · Made by
+      <a href="https://github.com/predorock" style="color:#c084fc;text-decoration:none">predo</a> ·
+      <a href="https://github.com/predorock/cinepals" style="color:#c084fc;text-decoration:none">Source on GitHub</a>
+    </p>
   </div></body></html>`;
 }

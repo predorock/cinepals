@@ -49,7 +49,8 @@ Playwright starts the app server itself (`webServer` in
 | `profile.spec.ts` | Set display name → header updates → persists across reload. |
 | `friends.spec.ts` | Two users: request → accept → both friends → unfriend; and decline. |
 | `suggestions.spec.ts` | Real TMDB search → suggest to a friend → received/sent → mark watched; "no friends → can't suggest". |
-| `addon.spec.ts` | Personal manifest + catalog respond; regenerating the token changes the URL. |
+| `digest.spec.ts` | Daily digest: unauthorized trigger rejected, recipient gets one bundled email, re-run sends nothing (idempotent). |
+| `addon.spec.ts` | Personal manifest + catalog respond; regenerating the token changes the URL; manifest version matches `package.json`. |
 | `account.spec.ts` | Delete account → signed out (401). |
 
 ---

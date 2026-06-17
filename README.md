@@ -40,15 +40,17 @@ just dev    # Postgres + Mailpit + hot-reload server
 One Express/TypeScript service serves a REST API (`/api/*`) for the configure-page SPA,
 the Stremio addon protocol (`/u/:token/*`), and the static SPA itself. State is in
 PostgreSQL via Prisma; title metadata comes from TMDB and is cached. Auth is a magic-link
-email flow with a stateless JWT session cookie.
+email flow with a stateless JWT session cookie. Friends' suggestions are emailed as a
+single **daily digest** at 18:00 Europe/Rome (a scheduled workflow pings a token-protected
+endpoint).
 
 → [Detailed architecture](docs/02-architecture.md)
 
 ## Configuration
 
 Key variables: `DATABASE_URL` (required), `JWT_SECRET`, `PUBLIC_URL`
-(default `http://127.0.0.1:8990`), `TMDB_API_KEY`, and email vars
-(`RESEND_API_KEY` / `SMTP_URL` / `EMAIL_FROM`).
+(default `http://127.0.0.1:8990`), `TMDB_API_KEY`, email vars
+(`RESEND_API_KEY` / `SMTP_URL` / `EMAIL_FROM`), and `CRON_SECRET` (guards the digest job).
 
 → [Full configuration reference](docs/03-configuration.md)
 

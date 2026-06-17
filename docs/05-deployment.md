@@ -41,6 +41,7 @@ The server listens on `PORT` (default `8990`) and exposes a health check at `/he
    - `TMDB_API_KEY`
    - `RESEND_API_KEY`
    - `EMAIL_FROM`
+   - `CRON_SECRET` — bearer token for the daily digest endpoint (see [Scheduled jobs](#scheduled-jobs-daily-digest))
    - `DATABASE_URL` is wired from the managed Postgres; `JWT_SECRET` is auto-generated; `NODE_ENV=production`.
 4. Each push to the deploy branch auto-builds and redeploys. HTTPS is automatic
    (satisfies Stremio's HTTPS requirement). See [Configuration](03-configuration.md) for
@@ -64,6 +65,28 @@ docker compose up --build   # rebuild images first
 `Dockerfile.dev` targets local development (hot-reload via `tsx`). For a production
 container, build with `pnpm run build` and run `node dist/server.js` on a Node 22 base
 image with the production env vars set.
+
+---
+
+## Scheduled jobs (daily digest)
+
+The daily suggestion digest is sent by an external scheduler, because Render's free tier
+sleeps when idle (an in-process cron wouldn't fire reliably). The workflow
+[`.github/workflows/digest.yml`](../.github/workflows/digest.yml) pings the
+token-protected endpoint `POST /internal/run-digest` once a day at **18:00 Europe/Rome**
+(it fires at 16:00 & 17:00 UTC and gates on the Rome local hour to stay correct across DST).
+
+Setup:
+
+1. Generate a strong secret, e.g. `openssl rand -hex 32`.
+2. Set it as `CRON_SECRET` in **both** places (the values must match):
+   - Render service env var (`CRON_SECRET`).
+   - GitHub Actions repo secret: `gh secret set CRON_SECRET` (or Settings → Secrets and variables → Actions).
+3. Trigger a one-off run any time with `gh workflow run digest.yml` (manual dispatch
+   bypasses the time gate), or `curl -X POST https://<host>/internal/run-digest -H "Authorization: Bearer $CRON_SECRET"`.
+
+The endpoint returns `{ ok, recipients, emails, suggestions }` and is idempotent
+(suggestions already included in a digest are skipped via `notifiedAt`).
 
 ---
 

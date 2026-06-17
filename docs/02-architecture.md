@@ -47,7 +47,8 @@ src/
 │   ├── authRoutes.ts      # /api/auth
 │   ├── friendRoutes.ts    # /api/friends
 │   ├── suggestionRoutes.ts# /api/suggestions
-│   └── searchRoutes.ts    # /api/search
+│   ├── searchRoutes.ts    # /api/search
+│   └── internalRoutes.ts  # /internal (CRON_SECRET-guarded digest trigger)
 ├── addon/
 │   ├── router.ts          # /u/:token Stremio protocol router
 │   ├── manifest.ts        # dynamic manifest (per-friend catalogs)
@@ -57,7 +58,7 @@ src/
     ├── userService.ts     # users, shadow users, addon tokens
     ├── authService.ts     # magic-link request/consume
     ├── friendService.ts   # friend requests, accept/decline, friends list
-    └── suggestionService.ts# create/list suggestions, status updates, title enrichment
+    └── suggestionService.ts# create/list suggestions, status updates, titles, daily digest
 
 public/                    # SPA: index.html, app.js, style.css
 prisma/schema.prisma       # data model
@@ -80,7 +81,8 @@ Defined in [`prisma/schema.prisma`](../prisma/schema.prisma):
 - **Friendship** — `requesterId` + `addresseeId`, `status` (`pending|accepted|declined|blocked`),
   unique per pair.
 - **Suggestion** — `fromUserId` + `toUserId` + `imdbId` (unique triple), `contentType`
-  (`movie|series`), `note?`, `status` (`new|seen|watched|dismissed`).
+  (`movie|series`), `note?`, `status` (`new|seen|watched|dismissed`), `notifiedAt?`
+  (set once the suggestion has been included in a digest email — keeps digests idempotent).
 - **TitleCache** — keyed by `imdbId`: cached `name`, `poster`, `background`, `description`,
   `releaseInfo`. Populated at search time and on metadata lookups so the UI/addon avoid
   repeated TMDB calls.
@@ -124,6 +126,25 @@ Each user has a personal, secret `addonToken` embedded in their addon URL
 
 The addon URL is per-user and secret (it carries the token), so it is shared by URL,
 not published to Stremio's central addon directory.
+
+---
+
+## Notifications (daily digest)
+
+Suggestions are **not** emailed one-by-one. Instead a single **daily digest** is sent
+to each recipient bundling all of their pending suggestions:
+
+1. `createSuggestion` just stores the row (with `notifiedAt = null`).
+2. `sendDailyDigests()` finds all un-notified, non-dismissed suggestions, groups them by
+   recipient, sends **one email each** (titles resolved via the cache), and stamps
+   `notifiedAt`. It's idempotent — a re-run sends nothing new, and a failed send is
+   retried next time.
+3. It's triggered by `POST /internal/run-digest` (guarded by a `CRON_SECRET` bearer
+   token), called daily by the GitHub Actions workflow
+   [`.github/workflows/digest.yml`](../.github/workflows/digest.yml) at **18:00
+   Europe/Rome** (it fires at 16:00 & 17:00 UTC and gates on the Rome hour to stay correct
+   across DST). The app on Render's free tier sleeps when idle, so an external scheduler
+   pinging the endpoint is more reliable than an in-process cron.
 
 ---
 

@@ -89,7 +89,8 @@ export function emailLayout(title: string, bodyHtml: string): string {
     <p style="font-size:11px;color:#8a8aa3;margin:0">
       Cinepals — an unofficial addon for Stremio · Made by
       <a href="https://github.com/predorock" style="color:#c084fc;text-decoration:none">predo</a> ·
-      <a href="https://github.com/predorock/cinepals" style="color:#c084fc;text-decoration:none">Source on GitHub</a>
+      <a href="https://github.com/predorock/cinepals" style="color:#c084fc;text-decoration:none">Source on GitHub</a> ·
+      <a href="https://buymeacoffee.com/predorock" style="color:#c084fc;text-decoration:none">☕ Buy me a coffee</a>
     </p>
   </div></body></html>`;
 }

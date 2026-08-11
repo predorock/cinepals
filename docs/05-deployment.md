@@ -77,10 +77,11 @@ for the default Render region — since every query is a round-trip.
    what each variable does.
 
 > **Fill `DATABASE_URL`/`DIRECT_URL` before the first build, then redeploy.** They are
-> `sync: false`, so Render creates the service with them empty, and the build's `db push`
-> aborts with `Environment variable not found: DATABASE_URL` — the whole deploy fails
-> rather than starting an app with no database. The first build after step 3 is expected
-> to fail; the redeploy in step 5 is the one that succeeds.
+> `sync: false`, so Render creates the service with them empty and the build's `db push`
+> aborts with `P1012 … The environment variable DATABASE_URL resolved to an empty string`
+> — the whole deploy fails rather than starting an app with no database. The first build
+> after step 3 is expected to fail; the redeploy in step 5 is the one that succeeds.
+> A stale value fails differently: `P1001: Can't reach database server`.
 
 > Custom domain: point it at the service and set `PUBLIC_URL` to it. `https` is enforced
 > automatically for non-local hosts (see `resolvePublicUrl` in `src/config.ts`).

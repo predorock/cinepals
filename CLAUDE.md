@@ -211,9 +211,11 @@ it scales to zero instead.
   wired automatically (`generateValue`) — and only at first creation, so it survives
   blueprint re-syncs.
 - **The DB vars are build-critical now.** They were `fromDatabase` (always present at
-  build time); as `sync: false` an empty value makes `db push` abort with
-  `Environment variable not found: DATABASE_URL` and fails the *whole deploy* rather than
-  just starting a broken app. Set them before the first build.
+  build time); as `sync: false` they fail the *whole deploy* rather than just starting a
+  broken app. Two observed signatures: unset → `P1012 … DATABASE_URL resolved to an empty
+  string` (the `${DIRECT_URL:-$DATABASE_URL}` expansion always *sets* the var, so it's
+  "empty", never "not found"); stale/dead host → `P1001: Can't reach database server`.
+  Set them before the first build.
 - **Dropping `databases:` does not repoint an existing service.** Render *preserves* the
   current value of a `sync: false` var on re-sync, so the live service keeps the old
   Render connection string until `DATABASE_URL` is overwritten by hand in the dashboard.

@@ -14,7 +14,8 @@ All runtime configuration is read from environment variables and centralized in
 | `PORT` | no | `8990` | HTTP port the server listens on. |
 | `NODE_ENV` | no | `development` | `production` enables secure cookies, error-only DB logs, and the strict magic-link rate limit. |
 | `PUBLIC_URL` | recommended | `http://127.0.0.1:8990` | Public base URL. Used to build magic-links and the personal addon URLs. **`https` is forced for any non-local host**; `localhost`/`127.0.0.1` stay on `http`. Trailing slash is stripped. |
-| `DATABASE_URL` | **yes** | — | PostgreSQL connection string. |
+| `DATABASE_URL` | **yes** | — | PostgreSQL connection string. On Neon, use the **pooled** string (hostname contains `-pooler`) with `?sslmode=require&pgbouncer=true`. |
+| `DIRECT_URL` | Neon only | — | Neon's **direct** string, copied as-is (host without `-pooler`, and no `pgbouncer=true`). Build-time only: the `db push` in [`render.yaml`](../render.yaml) runs against it because schema changes need a real session, which transaction-mode pooling can't provide. Never read by the app, and ignored if set locally — `schema.prisma` reads only `DATABASE_URL`. |
 | `JWT_SECRET` | **yes** (prod) | `dev-insecure-secret` | Secret used to sign session JWTs. Set a long random value in production. |
 | `TMDB_API_KEY` | for search | — | TMDB v3 API key. Without it, search/metadata fall back to a small curated list and log a warning. |
 | `RESEND_API_KEY` | for real email | — | Resend API key. When set, transactional email is sent via the Resend HTTP API. |
@@ -23,8 +24,9 @@ All runtime configuration is read from environment variables and centralized in
 | `CRON_SECRET` | for digests | — | Bearer token guarding `POST /internal/run-digest` (the daily suggestion digest). Must match the `CRON_SECRET` stored in the scheduler (GitHub Actions). Unset → the endpoint rejects all calls. |
 | `MAILPIT_URL` | tests only | `http://127.0.0.1:8025` | Mailpit REST base used by the e2e suite to read magic-links. |
 
-> Values not visible in the source are marked `[TO VERIFY]`. None apply here — every
-> variable above is read in `src/config.ts`, `src/lib/email.ts`, or `playwright.config.ts`.
+> Every variable above is read in `src/config.ts`, `src/lib/email.ts`, or
+> `playwright.config.ts` — except `DIRECT_URL`, whose only consumer is the build command
+> in [`render.yaml`](../render.yaml).
 
 ---
 
@@ -59,7 +61,7 @@ Also defined in `src/config.ts`, not configurable via environment:
 | [`.env.example`](../.env.example) | Template for `.env.local`. |
 | [`docker-compose.yml`](../docker-compose.yml) | Local Postgres + app + Mailpit + Adminer. |
 | [`Dockerfile.dev`](../Dockerfile.dev) | Dev image (Node 22 Alpine) used by Compose. |
-| [`render.yaml`](../render.yaml) | Render Blueprint: web service + Postgres, env var declarations. |
+| [`render.yaml`](../render.yaml) | Render Blueprint: web service (Postgres is on Neon), env var declarations. |
 | [`prisma/schema.prisma`](../prisma/schema.prisma) | Data model + `DATABASE_URL` datasource. |
 | [`tsconfig.json`](../tsconfig.json) | TypeScript config (compiles `src/**` to `dist/`). |
 | [`playwright.config.ts`](../playwright.config.ts) | E2E config; loads `.env.local`, forces the dev profile. |

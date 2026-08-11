@@ -67,7 +67,8 @@ curl -X POST http://127.0.0.1:8990/api/auth/request \
 
 ## Deployment
 
-Deploys to Render via [`render.yaml`](render.yaml) (web service + Postgres). Any host works:
+Deploys to Render via [`render.yaml`](render.yaml) (web service only), with Postgres
+hosted on [Neon](https://neon.tech). Any host works:
 
 ```bash
 corepack pnpm run build && node dist/server.js

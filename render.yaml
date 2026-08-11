@@ -1,4 +1,5 @@
-# Render Blueprint: Node web service + Postgres database.
+# Render Blueprint: Node web service. Postgres is hosted on Neon (not Render) —
+# the free Render database expires after 90 days, Neon's free tier doesn't.
 # Deploy: create a new Blueprint on Render pointing to this repo.
 services:
   - type: web
@@ -6,13 +7,16 @@ services:
     runtime: node
     plan: free
     # Free tier doesn't support preDeployCommand, so we sync the schema during
-    # build (DATABASE_URL is available at build time). db push is idempotent.
+    # build (the database env vars are available at build time). db push is idempotent.
+    # It runs against DIRECT_URL: schema changes need a real session, which Neon's
+    # PgBouncer-backed pooled endpoint doesn't provide. Falls back to DATABASE_URL
+    # if DIRECT_URL isn't set (e.g. a non-Neon Postgres, which needs no split).
     # Use `corepack pnpm` (not `corepack enable`): enable tries to symlink into
     # /usr/bin, which is read-only on Render (EROFS). corepack runs the pnpm
     # version pinned in package.json directly. NODE_ENV=production makes pnpm
     # skip devDependencies, but the build needs them (prisma, typescript), so
     # --prod=false forces them in.
-    buildCommand: corepack pnpm install --prod=false && corepack pnpm run build && corepack pnpm exec prisma db push --accept-data-loss
+    buildCommand: corepack pnpm install --prod=false && corepack pnpm run build && DATABASE_URL="${DIRECT_URL:-$DATABASE_URL}" corepack pnpm exec prisma db push --accept-data-loss
     # Run the built server directly so runtime needs no package manager.
     startCommand: node dist/server.js
     healthCheckPath: /health
@@ -22,10 +26,18 @@ services:
       # Don't prompt to download pnpm in the non-interactive build.
       - key: COREPACK_ENABLE_DOWNLOAD_PROMPT
         value: "0"
+      # Neon, pooled endpoint (hostname contains "-pooler"). Append
+      # &pgbouncer=true to the string Neon gives you: it disables prepared
+      # statements, which transaction-mode pooling can't keep across queries.
+      # The rest of Neon's params (sslmode, channel_binding) can stay as-is.
       - key: DATABASE_URL
-        fromDatabase:
-          name: cinepals-db
-          property: connectionString
+        sync: false
+      # Neon, direct endpoint — copy it from Neon as-is (host without "-pooler",
+      # and no pgbouncer=true: it would make Prisma treat a real session as
+      # pooled). Build-time only, `prisma db push` needs a real session; the app
+      # never reads it, and neither does anything in src/.
+      - key: DIRECT_URL
+        sync: false
       - key: JWT_SECRET
         generateValue: true # Render generates a random secret
       - key: PUBLIC_URL
@@ -39,6 +51,6 @@ services:
       - key: CRON_SECRET
         sync: false # must match the CRON_SECRET secret in the GitHub Actions digest workflow
 
-databases:
-  - name: cinepals-db
-    plan: free
+# No `databases:` block: Postgres lives on Neon. Create the project at
+# https://console.neon.tech (region us-west-2 / Oregon, to match this service)
+# and paste its two connection strings into DATABASE_URL and DIRECT_URL above.
